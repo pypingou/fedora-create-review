@@ -176,14 +176,17 @@ class ReviewRequest(object):
         comment = "This package built on koji: %s" % url
         bug.addcomment(comment)
 
-    def create_review_request(self):
+    def create_review_request(self, rename_request):
         """ Create the review request on the bugzilla. """
         print 'Creating review'
+        review_type = 'Review Request'
+        if rename_request:
+            review_type = 'Rename Request'
         data = {
             'product': 'Fedora',
             'component': 'Package Review',
             'version': 'rawhide',
-            'short_desc': 'Review Request: %s - %s' % (self.info['name'],
+            'short_desc': '%s: %s - %s' % (review_type, self.info['name'],
                     self.info['summary']),
             'comment': BUG_COMMENT % (self.info['specurl'],
                     self.info['srpmurl'], self.info['description']),
@@ -193,6 +196,8 @@ class ReviewRequest(object):
             'bug_file_loc': '',
             'priority': 'unspecified',
             }
+        if rename_request:
+            data['comment'] = data['comment'] + '\n\n This is a Rename request'
         self.log.debug("bz.createbug(%s)", data)
         bug = bzclient.createbug(**data)
         bug.refresh()
@@ -245,7 +250,7 @@ class ReviewRequest(object):
             raise FedoraCreateReviewError(
                     'Something happened while uploading the files:\n %s' % output_upload)
         self.fill_urls()
-        bug = self.create_review_request()
+        bug = self.create_review_request(args.rename_request)
         if not args.no_build:
             self.add_comment_build(output_build, bug)
         print 'Review created at: https://bugzilla.redhat.com/show_bug.cgi?id=%s' % bug.id
@@ -298,6 +303,8 @@ def setup_parser():
                 help='Path to the src.rpm file')
     parser.add_argument('--user', dest='username',
                 help='FAS username')
+    parser.add_argument('--rename-request', action='store_true',
+                help='To create a Rename request instead of a Review request.')
     parser.add_argument('--koji-target', default='rawhide',
                 help='Target for the koji scratch build (default: rawhide)')
     parser.add_argument('--no-scratch-build', dest='no_build',
