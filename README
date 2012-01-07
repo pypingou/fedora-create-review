@@ -1,0 +1,21 @@
+fedora-create-review
+====================
+
+This project aims at providing a simple way to create a review request
+for Fedora on https://bugzilla.redhat.com
+
+See --help for information on how to run the script.
+Configuration file will be generated at the first run in
+ ~/.config/fedora-create-review
+This configuration file contains the target for the scp
+command which uploads the file on fedorapeople.
+
+The basic idea of this project is:
+- from a spec and srpm
+  - start a koji scratch build
+  - if build worked
+    - upload to fedorapeople.org
+    - create the bugzilla ticket
+    - Add the koji build in the bugzilla as a link
+  - otherwise:
+    - warn user
