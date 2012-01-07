@@ -35,21 +35,20 @@ The idea is:
 import argparse
 import ConfigParser
 import fedora_cert
-import getpass
 import logging
 import os
 import rpm
 import subprocess
 import sys
 from bugzilla.rhbugzilla import RHBugzilla3
-from subprocess import call, Popen
+from subprocess import Popen
 
 bzclient = RHBugzilla3(url='https://bugzilla.redhat.com/xmlrpc.cgi')
 
 SETTINGS_FILE = os.path.join(os.environ['HOME'], '.config',
                     'fedora-create-review')
 
-BUG_COMMENT ="""
+BUG_COMMENT = """
 Spec URL: %s
 SRPM URL: %s
 
@@ -64,6 +63,8 @@ if '--debug' in sys.argv:
     LOG.setLevel(logging.DEBUG)
 
 class FedoraCreateReviewError(Exception):
+    """ Generic Exception class used for the exception thrown in this
+    project. """
     pass
 
 
@@ -148,12 +149,18 @@ class Settings(object):
                 parser.set(section, name, self._dict[name])
 
 class ReviewRequest(object):
+    """ Review Request class, used to be able to keep some information
+    within the class.
+    """
 
     def __init__(self):
         """ Constructor. """
         self.settings = Settings()
         self.info = {}
         self.log = LOG
+        self.specfile = ''
+        self.spec = ''
+        self.srpmfile = ''
 
     def add_comment_build(self, output_build, bug):
         """ Retrieve the link to the koji build from the output of the
@@ -175,7 +182,7 @@ class ReviewRequest(object):
             'product': 'Fedora',
             'component': 'Package Review',
             'version' : 'rawhide',
-            'short_desc': 'Review Request: %s - %s' %(self.info['name'],
+            'short_desc': 'Review Request: %s - %s' % (self.info['name'],
                     self.info['summary']),
             'comment': BUG_COMMENT % (self.info['specurl'],
                     self.info['srpmurl'], self.info['description']),
@@ -186,10 +193,9 @@ class ReviewRequest(object):
             'priority': 'unspecified',
             }
         self.log.debug("bz.createbug(%s)", data)
-        b = bzclient.createbug(**data)
-        b.refresh()
-        print b
-        return b
+        bug = bzclient.createbug(**data)
+        bug.refresh()
+        return bug
 
     def do_scratch_build(self, target='rawhide'):
         """ Starts a scratch build on koji. """
@@ -198,9 +204,9 @@ class ReviewRequest(object):
         self.log.debug(cmd)
         try:
             proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, error = proc.communicate()
-        except OSError, e:
-            print "OSError : %s" % str(e)
+            output = proc.communicate()[0]
+        except OSError, err:
+            print "OSError : %s" % str(err)
         return (output, proc.returncode)
 
     def fill_urls(self):
@@ -229,19 +235,20 @@ class ReviewRequest(object):
                 target=args.koji_target)
             if returncode != 0:
                 raise FedoraCreateReviewError(
-                    'Something happened while trying to build this package on koji: \n %s' % output)
+                    'Something happened while trying to build this package on koji: \n %s' % output_build)
         self.info['summary'] = self.retrieve_summary()
         self.info['description'] = self.retrieve_description()
         self.info['name'] = self.retrieve_name()
         (output_upload, returncode) = self.upload_files()
         if returncode != 0:
             raise FedoraCreateReviewError(
-                    'Something happened while uploading the files:\n %s' % output)
+                    'Something happened while uploading the files:\n %s' % output_upload)
         self.fill_urls()
         bug = self.create_review_request()
         if not args.no_build:
             self.add_comment_build(output_build, bug)
         print 'Review created at: https://bugzilla.redhat.com/show_bug.cgi?id=%s' % bug.id
+        print bug
 
     def retrieve_description(self):
         """ Retrieve the description tag from a spec file. """
@@ -271,9 +278,9 @@ class ReviewRequest(object):
         self.log.debug(cmd)
         try:
             proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, error = proc.communicate()
-        except OSError, e:
-            print "OSError : %s" % str(e)
+            output = proc.communicate()[0]
+        except OSError, err:
+            print "OSError : %s" % str(err)
         return (output, proc.returncode)
 
 
@@ -304,5 +311,5 @@ if __name__ == '__main__':
     srpmfile = '/home/pierrey/rpmbuild/SRPMS/trac-mastertickets-plugin-3.0.2-2.20111215.git43a7537.el6.src.rpm'
     try:
         ReviewRequest().main()
-    except Exception, err:
-        print err
+    except Exception, error:
+        print error
