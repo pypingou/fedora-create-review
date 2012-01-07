@@ -29,7 +29,6 @@ The idea is:
     - Add the koji build in the bugzilla as a link
   - otherwise:
     - warn user
-  
 """
 
 import argparse
@@ -61,6 +60,7 @@ logging.basicConfig()
 LOG = logging.getLogger("fedora-create-review")
 if '--debug' in sys.argv:
     LOG.setLevel(logging.DEBUG)
+
 
 class FedoraCreateReviewError(Exception):
     """ Generic Exception class used for the exception thrown in this
@@ -148,6 +148,7 @@ class Settings(object):
             else:
                 parser.set(section, name, self._dict[name])
 
+
 class ReviewRequest(object):
     """ Review Request class, used to be able to keep some information
     within the class.
@@ -181,7 +182,7 @@ class ReviewRequest(object):
         data = {
             'product': 'Fedora',
             'component': 'Package Review',
-            'version' : 'rawhide',
+            'version': 'rawhide',
             'short_desc': 'Review Request: %s - %s' % (self.info['name'],
                     self.info['summary']),
             'comment': BUG_COMMENT % (self.info['specurl'],
