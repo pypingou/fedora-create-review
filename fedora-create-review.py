@@ -180,7 +180,7 @@ class ReviewRequest(object):
         """ Create the review request on the bugzilla. """
         print 'Creating review'
         review_type = 'Review Request'
-        if rename_request:
+        if rename_request is not False:
             review_type = 'Rename Request'
         data = {
             'product': 'Fedora',
@@ -196,8 +196,9 @@ class ReviewRequest(object):
             'bug_file_loc': '',
             'priority': 'unspecified',
             }
-        if rename_request:
-            data['comment'] = data['comment'] + '\n\n This is a Rename request'
+        if rename_request is not False:
+            data['comment'] = data['comment'] + \
+            '\n\n This is a Rename request for the former package \'%s\'' % rename_request
         self.log.debug("bz.createbug(%s)", data)
         bug = bzclient.createbug(**data)
         bug.refresh()
@@ -303,8 +304,8 @@ def setup_parser():
                 help='Path to the src.rpm file')
     parser.add_argument('--user', dest='username',
                 help='FAS username')
-    parser.add_argument('--rename-request', action='store_true',
-                help='To create a Rename request instead of a Review request.')
+    parser.add_argument('--rename-request', default='False',
+                help='Former name of the package.')
     parser.add_argument('--koji-target', default='rawhide',
                 help='Target for the koji scratch build (default: rawhide)')
     parser.add_argument('--no-scratch-build', dest='no_build',
