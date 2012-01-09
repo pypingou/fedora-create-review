@@ -207,7 +207,7 @@ class ReviewRequest(object):
     def do_scratch_build(self, target='rawhide'):
         """ Starts a scratch build on koji. """
         print 'Starting scratch build'
-        cmd = ['koji', 'build', '--scratch', target, srpmfile]
+        cmd = ['koji', 'build', '--scratch', target, self.srpmfile]
         self.log.debug(cmd)
         try:
             proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -316,8 +316,6 @@ def setup_parser():
     return parser
 
 if __name__ == '__main__':
-    specfile = '/home/pierrey/GIT/virtuoso-opensource/virtuoso-opensource.spec'
-    srpmfile = '/home/pierrey/rpmbuild/SRPMS/trac-mastertickets-plugin-3.0.2-2.20111215.git43a7537.el6.src.rpm'
     try:
         ReviewRequest().main()
     except Exception, error:
