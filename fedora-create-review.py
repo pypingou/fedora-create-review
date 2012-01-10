@@ -34,6 +34,7 @@ The idea is:
 import argparse
 import ConfigParser
 import fedora_cert
+import getpass
 import logging
 import os
 import rpm
@@ -230,6 +231,34 @@ class ReviewRequest(object):
         self.info['specurl'] = url + self.specfile.rsplit('/', 1)[1]
         self.info['srpmurl'] = url + self.srpmfile.rsplit('/', 1)[1]
 
+    def find_existing_reviews(self):
+        """ Return information about the review request(s) sumitted
+        for a given package.
+
+        This function queries the Fedora/RedHat's bugzilla to find the review
+        or reviews submitted for a given package.
+        It prints out the bug number, the assignee, the summary and the
+        resolution of each bug found.
+
+        :arg packagename the name of the package to search for
+        """
+        bugbz = bzclient.query(
+                {#'bug_status': ['CLOSED'],
+                 'short_desc': "Request: {0} -.*".format(self.info['name']),
+                 'short_desc_type': 'regexp',
+                 'component': 'Package Review'})
+
+        if bugbz:
+            print 'Reviews for a package of the same name have been found:'
+        for bug in bugbz:
+            print ' ', bug, '-', bug.resolution
+            print "\t",bug.url
+
+        if bugbz:
+            usr_inp = raw_input( 'Do you want to proceed anyway? [Y/N]')
+            if usr_inp.lower().startswith('n'):
+                raise FedoraCreateReviewError()
+
     def main(self):
         """ The main function."""
         parser = setup_parser()
@@ -246,6 +275,7 @@ class ReviewRequest(object):
         self.info['summary'] = self.retrieve_summary()
         self.info['description'] = self.retrieve_description()
         self.info['name'] = self.retrieve_name()
+        self.find_existing_reviews()
         (output_upload, returncode) = self.upload_files()
         if returncode != 0:
             raise FedoraCreateReviewError(
