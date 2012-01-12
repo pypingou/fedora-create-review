@@ -40,6 +40,7 @@ import os
 import rpm
 import subprocess
 import sys
+from xmlrpclib import Fault
 from bugzilla.rhbugzilla import RHBugzilla3
 from subprocess import Popen
 
@@ -200,8 +201,13 @@ class ReviewRequest(object):
             data['comment'] = data['comment'] + \
             '\n\n This is a Rename request for the former package \'%s\'' % rename_request
         self.log.debug("bz.createbug(%s)", data)
-        bug = self.bzclient.createbug(**data)
-        bug.refresh()
+        try:
+            bug = self.bzclient.createbug(**data)
+            bug.refresh()
+        except Fault, ex:
+            print ex
+            self.loging_bz()
+            self.create_review_request(rename_request)
         return bug
 
     def do_scratch_build(self, target='rawhide'):
@@ -258,6 +264,12 @@ class ReviewRequest(object):
             if usr_inp.lower().startswith('n'):
                 raise FedoraCreateReviewError()
 
+    def login_bz(self):
+        """ Login into the bugzilla. """
+        username = raw_input('Bugzilla username: ')
+        self.bzclient.login(user=username,
+                            password=getpass.getpass())
+
     def main(self):
         """ The main function."""
         parser = setup_parser()
@@ -268,10 +280,6 @@ class ReviewRequest(object):
             bzurl = 'https://partner-bugzilla.redhat.com'
 
         self.bzclient = RHBugzilla3(url="%s/xmlrpc.cgi" % bzurl)
-        if args.login:
-            username = raw_input('Bugzilla username: ')
-            self.bzclient.login(user=username,
-                                password=getpass.getpass())
         self.srpmfile = os.path.expanduser(args.srpmfile)
         self.specfile = os.path.expanduser(args.specfile)
         self.spec = rpm.spec(self.specfile)
@@ -342,8 +350,6 @@ def setup_parser():
                 help='Path to the spec file')
     parser.add_argument('srpmfile',
                 help='Path to the src.rpm file')
-    parser.add_argument('--login', action='store_true',
-                help='Ask for bugzilla password and login')
     parser.add_argument('--user', dest='username',
                 help='FAS username')
     parser.add_argument('--rename-request', default=False,
