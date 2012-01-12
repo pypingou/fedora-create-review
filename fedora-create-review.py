@@ -263,10 +263,11 @@ class ReviewRequest(object):
         parser = setup_parser()
         args = parser.parse_args()
         if not args.test:
-            self.bzclient = RHBugzilla3(url='https://bugzilla.redhat.com/xmlrpc.cgi')
+            bzurl = 'https://bugzilla.redhat.com'
         else:
-            self.bzclient = RHBugzilla3(url='https://partner-bugzilla.redhat.com/xmlrpc.cgi')
+            bzurl = 'https://partner-bugzilla.redhat.com'
 
+        self.bzclient = RHBugzilla3(url="%s/xmlrpc.cgi" % bzurl)
         if args.login:
             username = raw_input('Bugzilla username: ')
             self.bzclient.login(user=username,
@@ -292,7 +293,8 @@ class ReviewRequest(object):
         bug = self.create_review_request(args.rename_request)
         if not args.no_build:
             self.add_comment_build(output_build, bug)
-        print 'Review created at: https://bugzilla.redhat.com/show_bug.cgi?id=%s' % bug.id
+        print 'Review created at: %s/show_bug.cgi?id=%s' % (bzurl,
+                                                            bug.id)
         print bug
 
     def retrieve_description(self):
