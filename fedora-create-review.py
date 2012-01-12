@@ -207,7 +207,7 @@ class ReviewRequest(object):
         except Fault, ex:
             print ex
             self.login_bz()
-            self.create_review_request(rename_request)
+            return self.create_review_request(rename_request)
         return bug
 
     def do_scratch_build(self, target='rawhide'):
