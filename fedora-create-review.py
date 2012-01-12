@@ -43,7 +43,6 @@ import sys
 from bugzilla.rhbugzilla import RHBugzilla3
 from subprocess import Popen
 
-bzclient = RHBugzilla3(url='https://bugzilla.redhat.com/xmlrpc.cgi')
 
 SETTINGS_FILE = os.path.join(os.environ['HOME'], '.config',
                     'fedora-create-review')
@@ -201,7 +200,7 @@ class ReviewRequest(object):
             data['comment'] = data['comment'] + \
             '\n\n This is a Rename request for the former package \'%s\'' % rename_request
         self.log.debug("bz.createbug(%s)", data)
-        bug = bzclient.createbug(**data)
+        bug = self.bzclient.createbug(**data)
         bug.refresh()
         return bug
 
@@ -242,7 +241,7 @@ class ReviewRequest(object):
 
         :arg packagename the name of the package to search for
         """
-        bugbz = bzclient.query(
+        bugbz = self.bzclient.query(
                 {#'bug_status': ['CLOSED'],
                  'short_desc': "Request: {0} -.*".format(self.info['name']),
                  'short_desc_type': 'regexp',
@@ -263,6 +262,11 @@ class ReviewRequest(object):
         """ The main function."""
         parser = setup_parser()
         args = parser.parse_args()
+        if not args.test:
+            self.bzclient = RHBugzilla3(url='https://bugzilla.redhat.com/xmlrpc.cgi')
+        else:
+            self.bzclient = RHBugzilla3(url='https://partner-bugzilla.redhat.com/xmlrpc.cgi')
+
         self.srpmfile = os.path.expanduser(args.srpmfile)
         self.specfile = os.path.expanduser(args.specfile)
         self.spec = rpm.spec(self.specfile)
@@ -338,6 +342,8 @@ def setup_parser():
                 help='Former name of the package.')
     parser.add_argument('--koji-target', default='rawhide',
                 help='Target for the koji scratch build (default: rawhide)')
+    parser.add_argument('--test', default=False, action='store_true',
+                help='Run on a test bugzilla instance')
     parser.add_argument('--no-scratch-build', dest='no_build',
                 action='store_true',
                 help='Do not run the koji scratch build')
