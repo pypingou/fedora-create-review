@@ -261,7 +261,7 @@ class ReviewRequest(object):
 
         if bugbz:
             usr_inp = raw_input( 'Do you want to proceed anyway? [Y/N]')
-            if usr_inp.lower().startswith('n'):
+            if usr_inp.lower() == ''  or usr_inp.lower().startswith('n'):
                 raise FedoraCreateReviewError()
 
     def login_bz(self):
