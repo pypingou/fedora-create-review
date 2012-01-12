@@ -267,6 +267,10 @@ class ReviewRequest(object):
         else:
             self.bzclient = RHBugzilla3(url='https://partner-bugzilla.redhat.com/xmlrpc.cgi')
 
+        if args.login:
+            username = raw_input('Bugzilla username: ')
+            self.bzclient.login(user=username,
+                                password=getpass.getpass())
         self.srpmfile = os.path.expanduser(args.srpmfile)
         self.specfile = os.path.expanduser(args.specfile)
         self.spec = rpm.spec(self.specfile)
@@ -336,6 +340,8 @@ def setup_parser():
                 help='Path to the spec file')
     parser.add_argument('srpmfile',
                 help='Path to the src.rpm file')
+    parser.add_argument('--login', action='store_true',
+                help='Ask for bugzilla password and login')
     parser.add_argument('--user', dest='username',
                 help='FAS username')
     parser.add_argument('--rename-request', default=False,
