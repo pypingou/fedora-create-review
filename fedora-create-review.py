@@ -206,7 +206,7 @@ class ReviewRequest(object):
             bug.refresh()
         except Fault, ex:
             print ex
-            self.loging_bz()
+            self.login_bz()
             self.create_review_request(rename_request)
         return bug
 
