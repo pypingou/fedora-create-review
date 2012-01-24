@@ -19,3 +19,13 @@ The basic idea of this project is:
     - Add the koji build in the bugzilla as a link
   - otherwise:
     - warn user
+
+
+/!\ The future of fedora-create-review
+---------------------------------------
+
+This code has now been integrated into FedoraReview.
+
+If I keep the code present here, changes will be applied in both places until
+the code diverge. Then FedoraReview will become the official source for this
+script.
